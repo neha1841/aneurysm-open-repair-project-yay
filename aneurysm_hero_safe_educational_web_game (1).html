@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aneurysm Lab — Interactive Click & Perform (7th Grade)</title>
+  <style>
+    :root{--bg:#0f1724;--card:#07142a;--accent:#6ad4ff;--accent2:#9b8cff;--muted:#b7c1d6}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;background:linear-gradient(180deg,#071430 0%, #0b1730 100%);color:var(--muted);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:18px}
+    .wrap{width:1000px;max-width:98%;background:linear-gradient(180deg,#081427 0%, #081a2f 60%);border-radius:16px;padding:18px;box-shadow:0 20px 50px rgba(5,8,20,0.6);border:1px solid rgba(255,255,255,0.02);display:grid;grid-template-columns:420px 1fr;gap:16px}
+    .left{padding:14px}
+    .title{font-size:20px;color:var(--accent);font-weight:800;letter-spacing:0.6px}
+    .subtitle{color:var(--muted);margin-top:6px;font-size:13px}
+    .lab-panel{margin-top:14px;background:linear-gradient(180deg,#0b1b34,#071026);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03)}
+    .stage{display:flex;flex-direction:column;align-items:center;gap:10px}
+    .lab-scene{width:360px;height:420px;background:linear-gradient(180deg,#08223e,#071726);border-radius:12px;position:relative;padding:12px;display:flex;flex-direction:column;align-items:center}
+    .lab-header{display:flex;align-items:center;gap:10px}
+    .dr{width:64px;height:64px;border-radius:10px;background:linear-gradient(180deg,#dfe7ff,#bcd6ff);display:flex;align-items:center;justify-content:center;color:#06203a;font-weight:800}
+    .dr .name{font-size:11px;color:#06203a}
+    .panel-center{flex:1;display:flex;align-items:center;justify-content:center}
+
+    /* patient card */
+    .patient-card{width:220px;height:260px;background:linear-gradient(180deg,#ffdcbf,#ffd3a8);border-radius:16px;position:relative;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,0.25)}
+    .patient-inner{width:140px;height:180px;background:#ffd9c7;border-radius:12px;position:relative;display:flex;align-items:center;justify-content:center}
+    .artery{width:95px;height:40px;border-radius:40px;background:linear-gradient(90deg,#ff8b8b,#ffcfcf);display:flex;align-items:center;justify-content:center;position:absolute;top:84px}
+    .target{width:70px;height:30px;border-radius:40px;background:#ffb0b0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#3a0a0a}
+    .graft-badge{position:absolute;left:50%;transform:translateX(-50%);top:150px;background:linear-gradient(90deg,#dff3ff,#bfe8ff);padding:6px 10px;border-radius:10px;border:2px solid rgba(150,200,255,0.15);display:none}
+
+    .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    .tool{background:linear-gradient(180deg,#0f2a42,#0b2238);color:var(--muted);padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;font-weight:700}
+    .tool.active{outline:2px solid rgba(106,212,255,0.14);background:linear-gradient(180deg,#12384f,#0b2b3f)}
+    .status{margin-top:8px;font-size:13px;color:#cfeeff}
+
+    .right{padding:14px}
+    .info-card{background:linear-gradient(180deg,#07172a,#051022);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03)}
+    .info-title{color:var(--accent2);font-weight:800;font-size:16px}
+    .info-text{margin-top:8px;color:var(--muted);line-height:1.4}
+    .purpose{margin-top:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg,#072022,#041118);border:1px dashed rgba(155,140,255,0.08);color:#bfe8ff}
+
+    .controls-bottom{display:flex;gap:8px;margin-top:14px;align-items:center}
+    .btn{background:var(--accent);color:#021427;border:none;padding:10px 12px;border-radius:10px;font-weight:800;cursor:pointer}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .hint{color:#9fbcd9;font-size:13px;margin-top:8px}
+
+    .score{margin-top:12px;color:#bdecb6}
+    .message{margin-top:10px;font-size:14px;color:#ffdca8}
+
+    footer{grid-column:1/-1;margin-top:8px;text-align:center;color:#6b7c95;font-size:12px}
+
+    @media (max-width:980px){.wrap{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Aneurysm Lab interactive game">
+    <div class="left">
+      <div class="lab-panel">
+        <div class="lab-header">
+          <div class="dr" id="drAvatar">67<div class="name">Dr. Six-Seven</div></div>
+          <div>
+            <div class="title">Aneurysm Lab — Click & Perform</div>
+            <div class="subtitle">Science-lab theme • Fun sounds • Guided help when you make a mistake</div>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="lab-scene" id="labScene">
+            <div class="panel-center">
+              <div class="patient-card" id="patientCard" role="img" aria-label="cartoon patient">
+                <div class="patient-inner">
+                  <div class="artery" id="artery">
+                    <div class="target" id="aneurysm">ANE</div>
+                  </div>
+                </div>
+                <div class="graft-badge" id="graftBadge">GRAFT READY</div>
+              </div>
+            </div>
+            <div style="position:absolute;right:12px;top:12px;color:var(--muted);font-size:12px">Lab Console</div>
+            <div style="position:absolute;left:12px;bottom:12px;color:var(--muted);font-size:12px">Dr. Six-Seven: "Let’s learn and have fun!"</div>
+          </div>
+
+          <div class="tools" id="toolList" aria-label="tools">
+            <!-- tools injected here -->
+          </div>
+          <div class="status" id="status">Choose a tool to begin. Tip: Listen to Dr. Six-Seven's hints!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="info-card">
+        <div class="info-title">Dr. Six-Seven's Lab Notes</div>
+        <div class="info-text" id="infoText">Welcome! In this interactive game you will click tools and then click the patient to perform steps. If you do the wrong action, Dr. Six-Seven will help you with a friendly hint.</div>
+
+        <div class="purpose" id="purposeBox" style="display:none"></div>
+        <div class="score" id="scoreBox">Score: 0</div>
+        <div class="message" id="messageBox"></div>
+
+        <div class="controls-bottom">
+          <button class="btn" id="resetBtn">Reset Game</button>
+          <button class="btn secondary" id="helpBtn">Show Step Order</button>
+          <button class="btn secondary" id="soundBtn">Toggle Sound</button>
+        </div>
+        <div class="hint" id="hintBox">Hint: Steps are similar to real surgery but simplified for 7th grade.</div>
+      </div>
+    </div>
+
+    <footer>Classroom safe • Non-graphic • Built for learning</footer>
+  </div>
+
+  <script>
+    /***********************
+     * Game data & config
+     ***********************/
+    const steps = [
+      {id:'prepare',label:'Prepare Patient',tool:'Sterile Field',action:'clickPatient',desc:'Clean area, check monitors, and give anesthesia so the patient is safe and asleep.',purpose:'Keep the patient comfortable and infection-free.'},
+      {id:'incision',label:'Make Incision',tool:'Scalpel',action:'clickTarget',desc:'Make a small, gentle cut in the belly (cartooned here) to reach the aorta.',purpose:'Open a doorway to reach the aneurysm.'},
+      {id:'expose',label:'Expose Aneurysm',tool:'Retractor',action:'clickPatient',desc:'Move tissue aside carefully to see the aneurysm clearly.',purpose:'So doctors can see where the damaged area is.'},
+      {id:'clamp',label:'Clamp Proximal & Distal',tool:'Clamp',action:'clickTarget',desc:'Place clamps above and below the bulge to stop blood flow while fixing it.',purpose:'Stop blood from moving through the weak part so no bleeding happens.'},
+      {id:'open',label:'Open Aneurysm',tool:'Small Scissor',action:'clickTarget',desc:'Open the bulge to look inside. In real surgeries clots might be removed — we keep it simple here.',purpose:'Inspect the damaged area.'},
+      {id:'graft',label:'Place Graft',tool:'Graft',action:'placeGraft',desc:'Put a strong tube (graft) inside the artery to replace the weak spot.',purpose:'Reinforce the artery so it won’t burst.'},
+      {id:'suture',label:'Suture & Check',tool:'Suture',action:'clickTarget',desc:'Sew the graft in place and check for leaks.',purpose:'Secure the new tube and make sure blood flows correctly.'},
+      {id:'close',label:'Close & Recover',tool:'Stapler',action:'clickPatient',desc:'Close the cut and move the patient to recovery for monitoring.',purpose:'Finish surgery and watch for a safe recovery.'}
+    ];
+
+    let currentStep = 0; // index in steps that player should do next for guided checks
+    let activeTool = null; // selected tool id
+    let score = 0;
+    let soundOn = true;
+
+    // tools UI
+    const toolsContainer = document.getElementById('toolList');
+    const status = document.getElementById('status');
+    const infoText = document.getElementById('infoText');
+    const purposeBox = document.getElementById('purposeBox');
+    const scoreBox = document.getElementById('scoreBox');
+    const messageBox = document.getElementById('messageBox');
+    const graftBadge = document.getElementById('graftBadge');
+    const aneurysm = document.getElementById('aneurysm');
+    const artery = document.getElementById('artery');
+    const patientCard = document.getElementById('patientCard');
+
+    // helper: create audio via WebAudio (no external files)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq=440,duration=0.12,type='sine',gain=0.12){
+      if(!soundOn) return;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.value = gain;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+duration);
+      setTimeout(()=>{try{o.stop()}catch(e){}},duration*1000+20);
+    }
+    function playClick(){playTone(880,0.08,'triangle',0.08)}
+    function playDing(){playTone(880,0.14,'sine',0.14);setTimeout(()=>playTone(1320,0.09,'sine',0.08),80)}
+    function playBuzz(){playTone(150,0.18,'sawtooth',0.16)}
+
+    // render tool buttons
+    steps.forEach((s,idx)=>{
+      const btn = document.createElement('button');
+      btn.className='tool';
+      btn.id='tool-'+s.id;
+      btn.textContent = s.tool;
+      btn.title = s.label;
+      btn.onclick = ()=>selectTool(s.id);
+      toolsContainer.appendChild(btn);
+    });
+
+    function selectTool(toolId){
+      activeTool = toolId;
+      document.querySelectorAll('.tool').forEach(t=>t.classList.remove('active'));
+      const el = document.getElementById('tool-'+toolId);
+      if(el) el.classList.add('active');
+      status.textContent = `Selected tool: ${document.getElementById('tool-'+toolId).textContent}`;
+      if(soundOn) playClick();
+    }
+
+    // patient / target clicks
+    artery.addEventListener('click', ()=>handleAction('clickTarget'));
+    patientCard.addEventListener('click', ()=>handleAction('clickPatient'));
+
+    function handleAction(actionType){
+      const expected = steps[currentStep];
+      // if no tool selected, prompt
+      if(!activeTool){
+        messageBox.textContent = `Pick a tool first! Dr. Six-Seven says: choose the right tool for the job.`;
+        if(soundOn) playBuzz();
+        return;
+      }
+
+      // find which step matches activeTool
+      const chosenStep = steps.find(s=>s.id===activeTool);
+      if(!chosenStep){console.warn('no step for tool'); return}
+
+      // correct if chosen step's action matches where player clicked
+      if(chosenStep.action === actionType || chosenStep.action==='placeGraft' && actionType==='clickTarget'){
+        // if player is allowed to do steps out of order, still give feedback — we do mix mode
+        const isCorrectOrder = chosenStep.id === expected.id;
+        // handle graft special action
+        if(chosenStep.id==='graft'){
+          // place graft animation
+          graftBadge.style.display='block';
+          graftBadge.animate([{transform:'translateY(-12px)',opacity:0},{transform:'translateY(0)',opacity:1}],{duration:500,iterations:1});
+        }
+
+        // scoring: correct order -> +10, out-of-order -> +5 but give a guiding hint
+        if(isCorrectOrder){ score+=10; messageBox.textContent = `Nice! You performed: ${chosenStep.label} — that's the expected next step.`; if(soundOn) playDing(); currentStep++; }
+        else{ score+=5; messageBox.textContent = `Good action, but note: Dr. Six-Seven suggests doing this step ${steps.findIndex(s=>s.id===chosenStep.id) < currentStep ? 'earlier' : 'later'} in the sequence. We'll guide you.`; if(soundOn) playClick(); }
+
+        // update UI and show purpose
+        purposeBox.style.display='block';
+        purposeBox.innerHTML = `<strong>${chosenStep.label}</strong><br>${chosenStep.desc}<br><em>Why? ${chosenStep.purpose}</em>`;
+        scoreBox.textContent = `Score: ${score}`;
+        // mark aneurysm visually when clamps applied or open
+        if(chosenStep.id==='clamp'){
+          aneurysm.style.transform='scale(0.92)';
+          aneurysm.style.boxShadow='inset 0 -6px 10px rgba(0,0,0,0.12)';
+          setTimeout(()=>{aneurysm.style.boxShadow='';aneurysm.style.transform='';},900);
+        }
+        if(chosenStep.id==='open'){
+          aneurysm.animate([{transform:'translateY(0)'},{transform:'translateY(-8px)'},{transform:'translateY(0)'}],{duration:700,iterations:1});
+        }
+        if(chosenStep.id==='suture'){
+          // small sparkle
+          const sEl = document.createElement('div');
+          sEl.style.position='absolute';sEl.style.width='12px';sEl.style.height='12px';sEl.style.borderRadius='6px';sEl.style.background='rgba(255,255,255,0.9)';
+          sEl.style.left='50%';sEl.style.top='50%';sEl.style.transform='translate(-50%,-50%)';
+          document.body.appendChild(sEl);
+          sEl.animate([{opacity:1,transform:'scale(0.2)'},{opacity:0,transform:'scale(1.6)'}],{duration:900}).onfinish=()=>sEl.remove();
+        }
+
+        // if we just completed the expected step, advance guidance
+        if(isCorrectOrder){
+          if(currentStep>=steps.length){
+            messageBox.textContent = '🎉 All steps complete! Dr. Six-Seven: Great job, scientist-surgeon!';
+            if(soundOn) playDing();
+          } else {
+            messageBox.textContent += ` Next: ${steps[currentStep].label}.`;
+          }
+        }
+      } else {
+        // wrong action for clicked area
+        messageBox.textContent = `Hmm — that tool doesn't work there. Dr. Six-Seven tip: ${chosenStep.label} should be used ${chosenStep.action==='clickTarget'?'on the artery':'on the patient body'}.`; 
+        if(soundOn) playBuzz();
+        // gentle guidance: highlight expected tool
+        const expectedToolEl = document.getElementById('tool-'+expected.id);
+        if(expectedToolEl){
+          expectedToolEl.animate([{boxShadow:'0 0 0 0 rgba(106,212,255,0)'},{boxShadow:'0 0 0 12px rgba(106,212,255,0.08)'}],{duration:900,iterations:1});
+        }
+      }
+    }
+
+    // special action for placing graft: click the Graft tool, then click artery
+    // already handled by placeGraft mapping
+
+    // help button: show step order
+    document.getElementById('helpBtn').addEventListener('click', ()=>{
+      const order = steps.map((s,i)=>`${i+1}. ${s.label}`).join('\n');
+      alert('Recommended step order:\n\n'+order);
+    });
+
+    // reset game
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      currentStep=0; activeTool=null; score=0; scoreBox.textContent='Score: 0'; purposeBox.style.display='none'; messageBox.textContent='Game reset. Select a tool to begin.'; document.querySelectorAll('.tool').forEach(t=>t.classList.remove('active')); graftBadge.style.display='none'; aneurysm.style.boxShadow=''; if(soundOn) playClick();
+    });
+
+    // sound toggle
+    document.getElementById('soundBtn').addEventListener('click', ()=>{ soundOn=!soundOn; document.getElementById('soundBtn').textContent = soundOn ? 'Sound: On' : 'Sound: Off'; if(soundOn) playDing();});
+    document.getElementById('soundBtn').textContent = 'Sound: On';
+
+    // small accessibility: keyboard number keys to select tools
+    window.addEventListener('keydown', (e)=>{
+      if(e.key>='1' && e.key<='9'){
+        const idx = parseInt(e.key)-1; if(steps[idx]) selectTool(steps[idx].id);
+      }
+      if(e.key==='r') document.getElementById('resetBtn').click();
+    });
+
+    // initial message
+    messageBox.textContent = 'Welcome! Select a tool (or press 1-8) and then click the patient or artery to try it.';
+
+  </script>
+</body>
+</html>
